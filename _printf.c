@@ -1,57 +1,55 @@
 #include "main.h"
+#include <stdio.h>
 
 /**
- * _printf - entry point of printf like function
- * @format: argument that specify the format type
- * @...: variable length argument
- * Return: number of character printed
- **/
-
+ * _printf - produces output according to a format
+ *
+ * @format: given string
+ *
+ * Return: number of chars printed
+ */
 int _printf(const char *format, ...)
 {
+  unsigned int len = 0, i = 0, ibuf = 0;
+  char *buffer;
+  int (*handler)(va_list, char *, unsigned int);
+  va_list args;
 
-int track = 0;
-va_list args;
-
-char *pointer, *start;
-param_func flags = {0,0,0,0,0,0,0,0,0,0};
-
-va_start(args, format);
-if (!format || (format[0] == '%' && !format[1]))
-return (-1);
-
-if (format[0] == '%' && format[1] == ' ' && !format[2])
-return (-1);
-
-for (pointer = (char *)format; *pointer; pointer++)
-{
-init_params(&flags, args);
-if (*pointer != '%')
-{
-track += _putchar(*pointer);
-continue;
-}
-start = pointer;
-pointer++;
-while (get_flags(pointer, &flags))
-{
-pointer++;
-}
-
-pointer = get_width(pointer, &flags, args);
-pointer = get_precision(pointer, &flags, args);
-
-if (get_mods(pointer, &flags))
-pointer++;
-
-if (!func_parse(pointer))
-track += print_range(start, pointer,
-flags.l_mod || flags.h_mod ? pointer - 1 : 0);
-else
-track += print_func(pointer, args, &flags);
-}
-
-_putchar(-1);
-va_end(args);
-return (track);
+  va_start(args, format), buffer = malloc(sizeof(char) * 1024);
+  if (!format || !buffer || (format[i] == '%' && !format[i + 1]))
+    return (-1);
+  if (!format[i])
+    return (0);
+  for (i = 0; format && format[i]; i++)
+    {
+      if (format[i] == '%')
+	{
+	  i++;
+	  if (format[i] == '%')
+	    handl_buf(buffer, format[i], ibuf), len++;
+	  else if (format[i] == '\0')
+	    {
+	      print_buf(buffer, ibuf), free(buffer), va_end(args);
+	      return (-1);
+	    }
+	  else
+	    {
+	      handler = get_handl_func(format, i);
+	      if (handler == NULL)
+		{
+		  if (format[i + 1] == ' ' && !format[i + 2])
+		    return (-1);
+		  len++, i--, handl_buf(buffer, format[i], ibuf);
+		}
+	      else
+		len += handler(args, buffer, ibuf);
+	    }
+	}
+      else
+	handl_buf(buffer, format[i], ibuf), len++;
+      for (ibuf = len; ibuf > 1024; ibuf -= 1024)
+	;
+    }
+  print_buf(buffer, ibuf), free(buffer), va_end(args);
+  return (len);
 }
